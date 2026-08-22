@@ -366,7 +366,7 @@ function PuntoDeVenta() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="tasa">Tasa de referencia (Bs por 1 unidad)</Label>
+              <Label htmlFor="tasa">Tasa de referencia (Bs por 1 $)</Label>
               <Input
                 id="tasa"
                 inputMode="decimal"

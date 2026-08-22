@@ -116,7 +116,7 @@ export function mensajeWhatsapp(opts: {
       const sub = l.producto.precioUsd * l.cantidad;
       return [
         `• ${l.cantidad} x ${l.producto.categoria}`,
-        `  ${fmtUsd(sub)} / ${fmtRef(sub * tasa)} / ${fmtBs(sub * tasa)}`,
+        `  ${fmtUsd(sub)} / ${fmtBs(sub * tasa)}`,
       ].join("\n");
     })
     .join("\n");
@@ -139,7 +139,7 @@ export function mensajeWhatsapp(opts: {
     `Total USD: *${fmtUsd(totalUsd)}*`,
     `Total Bs: *${fmtBs(totalUsd * tasa)}*`,
     "",
-    `Tasa de referencia: *${fmtBs(tasa)} por 1 REF*`,
+    `Tasa de referencia: *${fmtBs(tasa)} por 1 $*`,
     "",
     "Gracias por su compra.",
   ].join("\n");
