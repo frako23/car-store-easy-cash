@@ -70,9 +70,7 @@ function Productos() {
                 </div>
                 <div className="mt-3 flex items-end justify-between">
                   <div>
-                    <p className="font-display text-lg font-semibold">
-                      {fmtRef(p.precioUsd)}
-                    </p>
+                    <p className="font-display text-lg font-semibold">{fmtRef(p.precioUsd)}</p>
                     {tasa > 0 && (
                       <p className="text-xs tabular text-muted-foreground">
                         {fmtBs(p.precioUsd * tasa)}

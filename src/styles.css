@@ -81,7 +81,10 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -109,8 +112,7 @@
   }
 
   .product-card {
-    background:
-      linear-gradient(180deg, oklch(1 0 0), oklch(0.985 0.01 235));
+    background: linear-gradient(180deg, oklch(1 0 0), oklch(0.985 0.01 235));
   }
 
   .whatsapp-gradient {
