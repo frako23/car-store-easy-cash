@@ -107,8 +107,8 @@ function PuntoDeVenta() {
 
   const enviarWhatsapp = () => {
     const texto = mensajeWhatsapp({ negocio, lineas, tasa, totalUsd });
-    const num = "584241468579";
-    const url = `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+    // const num = "584241468579";
+    const url = `https://wa.me/+58${telefono}?text=${encodeURIComponent(texto)}`;
     window.open(url, "_blank");
   };
 
