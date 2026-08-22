@@ -268,7 +268,7 @@ function PuntoDeVenta() {
               />
             </div>
 
-            <Button className="h-13 w-full py-4 text-base font-semibold" onClick={enviarWhatsapp}>
+            <Button className="w-full py-4 text-base font-semibold" onClick={enviarWhatsapp}>
               Enviar por WhatsApp
             </Button>
             <div className="flex gap-2">
