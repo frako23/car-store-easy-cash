@@ -1,18 +1,18 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Minus, Plus, RefreshCw, Search, Settings, Trash2, X } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { RefreshCw, Search, Settings, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { getTasa } from "@/lib/tasa.functions";
 import {
   cargarNegocio,
   cargarProductos,
   cargarTasaGuardada,
   fmtBs,
+  fmtRef,
   fmtUsd,
   guardarNegocio,
   guardarTasa,
@@ -20,21 +20,22 @@ import {
   type LineaCarrito,
   type Producto,
 } from "@/lib/pos";
+import { getTasa } from "@/lib/tasa.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Punto de Venta rápido en Bs y $ | CajaVE" },
+      { title: "Uniformes Médicos | Uniformes.Médicoss" },
       {
         name: "description",
         content:
-          "Factura en segundos desde el celular: precios en bolívares y dólares con tasa del BCV y envío del recibo por WhatsApp.",
+          "Catálogo mobile first de uniformes médicos, batas, chaquetas y suéteres con precios en REF y conversión a bolívares.",
       },
-      { property: "og:title", content: "CajaVE — Punto de venta móvil en Bs y $" },
+      { property: "og:title", content: "Uniformes Médicos" },
       {
         property: "og:description",
         content:
-          "Cobra rápido, calcula con la tasa de referencia del día y envía el detalle de la compra por WhatsApp.",
+          "Compra rápida de uniformes médicos con vista clara, moderna y pensada para WhatsApp.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -48,7 +49,8 @@ function PuntoDeVenta() {
   const [busqueda, setBusqueda] = useState("");
   const [carrito, setCarrito] = useState<Record<string, number>>({});
   const [tasaManual, setTasaManual] = useState<number | null>(null);
-  const [negocio, setNegocio] = useState("Mi Negocio");
+  const [monedaTasa, setMonedaTasa] = useState<"usd" | "eur">("usd");
+  const [negocio, setNegocio] = useState("Uniformes Médicos");
   const [telefono, setTelefono] = useState("");
   const [abrirCobro, setAbrirCobro] = useState(false);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
@@ -57,6 +59,7 @@ function PuntoDeVenta() {
     setProductos(cargarProductos());
     setTasaManual(cargarTasaGuardada());
     setNegocio(cargarNegocio());
+    setMonedaTasa("eur");
   }, []);
 
   const tasaQuery = useQuery({
@@ -65,11 +68,13 @@ function PuntoDeVenta() {
     staleTime: 1000 * 60 * 30,
   });
 
-  useEffect(() => {
-    if (tasaQuery.data?.usd) guardarTasa(tasaQuery.data.usd);
-  }, [tasaQuery.data]);
+  const tasaApi = monedaTasa === "usd" ? tasaQuery.data?.usd : tasaQuery.data?.eur;
 
-  const tasa = tasaManual ?? tasaQuery.data?.usd ?? 0;
+  useEffect(() => {
+    if (tasaApi) guardarTasa(tasaApi);
+  }, [tasaApi]);
+
+  const tasa = tasaManual ?? tasaApi ?? 0;
 
   const lineas: LineaCarrito[] = useMemo(
     () =>
@@ -87,7 +92,7 @@ function PuntoDeVenta() {
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return q ? productos.filter((p) => p.nombre.toLowerCase().includes(q)) : productos;
+    return q ? productos.filter((p) => p.categoria.toLowerCase().includes(q)) : productos;
   }, [busqueda, productos]);
 
   const agregar = (id: string) => setCarrito((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
@@ -102,30 +107,57 @@ function PuntoDeVenta() {
 
   const enviarWhatsapp = () => {
     const texto = mensajeWhatsapp({ negocio, lineas, tasa, totalUsd });
-    const num = telefono.replace(/\D/g, "");
-    const url = num
-      ? `https://wa.me/${num}?text=${encodeURIComponent(texto)}`
-      : `https://wa.me/?text=${encodeURIComponent(texto)}`;
+    const num = "584241468579";
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
     window.open(url, "_blank");
   };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background pb-36">
-      <header className="sticky top-0 z-20 bg-brand px-4 pb-4 pt-5 text-brand-foreground shadow-card">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-xl font-semibold">{negocio}</h1>
-            <p className="text-xs text-brand-foreground/70">
-              {tasa > 0 ? `Tasa ref. ${fmtBs(tasa)} / $1` : "Cargando tasa…"}
-              {tasaManual ? " (manual)" : ""}
-            </p>
+      <header className="hero sticky top-0 z-20 px-4 pb-4 pt-5 text-brand-foreground shadow-card">
+        <div className="relative z-10 flex items-center gap-3">
+          <img
+            src="/logo.jpg"
+            alt="Uniformes Médicos"
+            className="size-14 rounded-2xl border border-white/20 bg-white object-cover shadow-card"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs uppercase tracking-[0.28em] text-white/80">Catálogo médico</p>
+            <h1 className="truncate font-display text-xl font-semibold">{negocio}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/80">
+              <span className="rounded-full bg-white/12 px-2.5 py-1 font-medium">
+                USD {tasaQuery.data?.usd ? fmtBs(tasaQuery.data.usd) : "..."}
+              </span>
+              <span className="rounded-full bg-white/12 px-2.5 py-1 font-medium">
+                EUR {tasaQuery.data?.eur ? fmtBs(tasaQuery.data.eur) : "..."}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setMonedaTasa((m) => (m === "usd" ? "eur" : "usd"));
+                  setTasaManual(null);
+                }}
+                className="rounded-full bg-white px-3 py-1 font-semibold text-brand"
+              >
+                {monedaTasa === "usd" ? "Usando USD" : "Usando EUR"}
+              </button>
+            </div>
           </div>
           <div className="flex gap-1">
             <Button
               size="icon"
               variant="ghost"
+              aria-label="Vaciar selección"
+              className="text-brand-foreground hover:bg-white/10"
+              onClick={() => setCarrito({})}
+            >
+              <Trash2 />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
               aria-label="Actualizar tasa"
-              className="text-brand-foreground hover:bg-brand-foreground/10"
+              className="text-brand-foreground hover:bg-white/10"
               onClick={() => {
                 setTasaManual(null);
                 tasaQuery.refetch();
@@ -137,7 +169,7 @@ function PuntoDeVenta() {
               size="icon"
               variant="ghost"
               aria-label="Ajustes"
-              className="text-brand-foreground hover:bg-brand-foreground/10"
+              className="text-brand-foreground hover:bg-white/10"
               onClick={() => setAbrirAjustes(true)}
             >
               <Settings />
@@ -145,68 +177,79 @@ function PuntoDeVenta() {
           </div>
         </div>
 
-        <div className="relative mt-4">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            inputMode="search"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar producto…"
-            className="h-12 rounded-xl border-0 bg-card pl-9 text-base text-foreground"
-          />
+        <div className="relative z-10 mt-4 rounded-3xl bg-white/15 p-3 backdrop-blur-sm">
+          <p className="text-sm font-medium">Uniformes, batas, chaquetas y suéteres</p>
+          <p className="text-xs text-white/75">Venta rápida, visual y pensada para mobile first.</p>
+          <div className="relative mt-3">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/60" />
+            <Input
+              inputMode="search"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por categoría..."
+              className="h-12 rounded-2xl border-0 bg-white pl-9 text-base text-foreground"
+            />
+          </div>
         </div>
       </header>
 
       <section className="grid grid-cols-2 gap-3 p-4">
         {filtrados.map((p) => {
           const cant = carrito[p.id] ?? 0;
+          const Icon = p.icono;
           return (
             <button
               key={p.id}
+              type="button"
               onClick={() => agregar(p.id)}
-              className="relative flex min-h-28 flex-col justify-between rounded-2xl bg-card p-3 text-left shadow-card ring-1 ring-border transition active:scale-[0.97]"
+              className="product-card relative flex min-h-36 flex-col justify-between rounded-3xl p-3 text-left shadow-card ring-1 ring-border transition active:scale-[0.97] active:ring-brand"
             >
               {cant > 0 && (
                 <span className="absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {cant}
                 </span>
               )}
-              <span className="pr-6 text-sm font-medium leading-snug">{p.nombre}</span>
-              <span className="mt-2">
+              <div className="flex flex-col gap-3 pr-6">
+                <span className="grid size-12 place-items-center rounded-3xl bg-brand/10 text-brand">
+                  <Icon className="size-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-brand">
+                    {p.categoria}
+                  </p>
+                  <span className="mt-1 block text-base font-semibold leading-snug text-foreground">
+                    {p.categoria}
+                  </span>
+                </div>
+              </div>
+              <span className="mt-3">
                 <span className="block font-display text-lg font-semibold tabular text-foreground">
-                  {fmtBs(p.precioUsd * tasa)}
+                  {fmtUsd(p.precioUsd)}
                 </span>
                 <span className="block text-xs tabular text-muted-foreground">
-                  {fmtUsd(p.precioUsd)}
+                  {fmtBs(p.precioUsd * tasa)}
                 </span>
               </span>
             </button>
           );
         })}
-        {filtrados.length === 0 && (
-          <p className="col-span-2 py-10 text-center text-sm text-muted-foreground">
-            Sin resultados.{" "}
-            <Link to="/productos" className="font-medium text-primary underline">
-              Agregar producto
-            </Link>
-          </p>
-        )}
       </section>
 
       {items > 0 && (
         <div className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md p-4">
           <button
+            type="button"
             onClick={() => setAbrirCobro(true)}
-            className="flex w-full items-center justify-between rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-pop transition active:scale-[0.98]"
+            className="whatsapp-gradient flex w-full items-center justify-between rounded-3xl px-5 py-4 text-success-foreground shadow-pop transition active:scale-[0.98]"
           >
             <span className="text-sm font-medium">
-              {items} {items === 1 ? "artículo" : "artículos"} · Cobrar
+              {items} {items === 1 ? "pieza" : "piezas"} · Cobrar
             </span>
             <span className="text-right">
               <span className="block font-display text-lg font-bold tabular">
-                {fmtBs(totalUsd * tasa)}
+                {fmtUsd(totalUsd)}
               </span>
-              <span className="block text-xs tabular opacity-80">{fmtUsd(totalUsd)}</span>
+              <span className="block text-xs tabular opacity-80">{fmtBs(totalUsd * tasa)}</span>
             </span>
           </button>
         </div>
@@ -215,28 +258,39 @@ function PuntoDeVenta() {
       <Sheet open={abrirCobro} onOpenChange={setAbrirCobro}>
         <SheetContent side="bottom" className="mx-auto max-w-md rounded-t-3xl p-0">
           <SheetHeader className="border-b px-4 py-3">
-            <SheetTitle className="font-display">Resumen de la compra</SheetTitle>
+            <SheetTitle className="font-display">Resumen del pedido</SheetTitle>
           </SheetHeader>
 
           <div className="max-h-[45vh] space-y-2 overflow-y-auto px-4 py-3">
             {lineas.map((l) => (
               <div key={l.producto.id} className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{l.producto.nombre}</p>
+                  <p className="truncate text-sm font-medium">{l.producto.categoria}</p>
                   <p className="text-xs tabular text-muted-foreground">
-                    {fmtBs(l.producto.precioUsd * l.cantidad * tasa)} ·{" "}
-                    {fmtUsd(l.producto.precioUsd * l.cantidad)}
+                    {fmtUsd(l.producto.precioUsd * l.cantidad)} ·{" "}
+                    {fmtRef(l.producto.precioUsd * l.cantidad * tasa)} ·{" "}
+                    {fmtBs(l.producto.precioUsd * l.cantidad * tasa)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="icon" variant="outline" onClick={() => quitar(l.producto.id)}>
-                    <Minus />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    type="button"
+                    onClick={() => quitar(l.producto.id)}
+                  >
+                    -
                   </Button>
                   <span className="w-6 text-center text-sm font-semibold tabular">
                     {l.cantidad}
                   </span>
-                  <Button size="icon" variant="outline" onClick={() => agregar(l.producto.id)}>
-                    <Plus />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    type="button"
+                    onClick={() => agregar(l.producto.id)}
+                  >
+                    +
                   </Button>
                 </div>
               </div>
@@ -248,10 +302,10 @@ function PuntoDeVenta() {
               <span className="text-sm text-muted-foreground">Total a pagar</span>
               <span className="text-right">
                 <span className="block font-display text-2xl font-bold tabular">
-                  {fmtBs(totalUsd * tasa)}
+                  {fmtUsd(totalUsd)}
                 </span>
                 <span className="block text-sm tabular text-muted-foreground">
-                  {fmtUsd(totalUsd)}
+                  {fmtBs(totalUsd * tasa)}
                 </span>
               </span>
             </div>
@@ -261,14 +315,17 @@ function PuntoDeVenta() {
               <Input
                 id="tel"
                 inputMode="tel"
-                placeholder="584121234567"
+                placeholder="584241468579"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 className="h-12 text-base"
               />
             </div>
 
-            <Button className="w-full py-4 text-base font-semibold" onClick={enviarWhatsapp}>
+            <Button
+              className="whatsapp-gradient w-full py-4 text-base font-semibold text-success-foreground hover:opacity-95"
+              onClick={enviarWhatsapp}
+            >
               Enviar por WhatsApp
             </Button>
             <div className="flex gap-2">
@@ -280,10 +337,10 @@ function PuntoDeVenta() {
                   setAbrirCobro(false);
                 }}
               >
-                <Trash2 /> Vaciar
+                Vaciar
               </Button>
               <Button variant="ghost" className="flex-1" onClick={() => setAbrirCobro(false)}>
-                <X /> Seguir
+                Seguir
               </Button>
             </div>
           </div>
@@ -293,7 +350,7 @@ function PuntoDeVenta() {
       <Sheet open={abrirAjustes} onOpenChange={setAbrirAjustes}>
         <SheetContent side="bottom" className="mx-auto max-w-md rounded-t-3xl">
           <SheetHeader className="px-0">
-            <SheetTitle className="font-display">Ajustes</SheetTitle>
+            <SheetTitle className="font-display">Ajustes de marca</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
@@ -309,7 +366,7 @@ function PuntoDeVenta() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="tasa">Tasa de referencia (Bs por $1)</Label>
+              <Label htmlFor="tasa">Tasa de referencia (Bs por 1 unidad)</Label>
               <Input
                 id="tasa"
                 inputMode="decimal"
@@ -323,15 +380,16 @@ function PuntoDeVenta() {
                   }
                 }}
               />
-              <p className="text-xs text-muted-foreground">
-                Fuente oficial: ve.dolarapi.com
-                {tasaQuery.data?.fecha
-                  ? ` · ${new Date(tasaQuery.data.fecha).toLocaleDateString("es-VE")}`
-                  : ""}
-              </p>
             </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/productos">Administrar productos</Link>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setNegocio("Uniformes Médicos");
+                guardarNegocio("Uniformes Médicos");
+              }}
+            >
+              Restaurar marca base
             </Button>
           </div>
         </SheetContent>

@@ -1,132 +1,93 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  cargarProductos,
-  cargarTasaGuardada,
-  fmtBs,
-  fmtUsd,
-  guardarProductos,
-  type Producto,
-} from "@/lib/pos";
+import { cargarTasaGuardada, fmtBs, fmtRef, ICONOS_POR_CATEGORIA, PRODUCTOS_DEMO } from "@/lib/pos";
 
 export const Route = createFileRoute("/productos")({
   head: () => ({
     meta: [
-      { title: "Catálogo de productos y precios | CajaVE" },
+      { title: "Catálogo médico | Uniformes.Médicoss" },
       {
         name: "description",
         content:
-          "Agrega, edita y elimina los productos de tu punto de venta con precios en dólares y su conversión automática a bolívares.",
+          "Lista completa de uniformes médicos, batas, chaquetas y suéteres con precios base en dólares.",
       },
-      { property: "og:title", content: "Catálogo de productos | CajaVE" },
-      {
-        property: "og:description",
-        content: "Gestiona tu lista de productos y precios para facturar más rápido.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Productos,
 });
 
 function Productos() {
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [tasa, setTasa] = useState(0);
-  const [nombre, setNombre] = useState("");
-  const [precio, setPrecio] = useState("");
-
-  useEffect(() => {
-    setProductos(cargarProductos());
-    setTasa(cargarTasaGuardada() ?? 0);
-  }, []);
-
-  const persistir = (lista: Producto[]) => {
-    setProductos(lista);
-    guardarProductos(lista);
-  };
-
-  const agregar = (e: React.FormEvent) => {
-    e.preventDefault();
-    const p = Number(precio.replace(",", "."));
-    if (!nombre.trim() || !Number.isFinite(p) || p <= 0) return;
-    persistir([
-      { id: crypto.randomUUID(), nombre: nombre.trim(), precioUsd: p },
-      ...productos,
-    ]);
-    setNombre("");
-    setPrecio("");
-  };
+  const tasa = cargarTasaGuardada() ?? 0;
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-10">
-      <header className="sticky top-0 z-20 flex items-center gap-2 bg-brand px-3 py-4 text-brand-foreground shadow-card">
+      <header className="hero sticky top-0 z-20 flex items-center gap-3 px-3 py-4 text-brand-foreground shadow-card">
         <Button
           asChild
           size="icon"
           variant="ghost"
-          className="text-brand-foreground hover:bg-brand-foreground/10"
+          className="text-brand-foreground hover:bg-white/10"
         >
-          <Link to="/" aria-label="Volver a la caja">
+          <Link to="/" aria-label="Volver al inicio">
             <ArrowLeft />
           </Link>
         </Button>
-        <h1 className="font-display text-xl font-semibold">Productos</h1>
+        <div className="relative z-10">
+          <p className="text-xs uppercase tracking-[0.28em] text-white/70">Marca y catálogo</p>
+          <h1 className="font-display text-xl font-semibold">Uniformes médicos</h1>
+        </div>
       </header>
 
-      <form onSubmit={agregar} className="space-y-3 border-b bg-card p-4 shadow-card">
-        <div className="space-y-1.5">
-          <Label htmlFor="nombre">Producto</Label>
-          <Input
-            id="nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej: Café molido 250g"
-            className="h-12 text-base"
-          />
+      <section className="space-y-4 p-4">
+        <div className="rounded-3xl bg-card p-4 shadow-card ring-1 ring-border">
+          <p className="text-sm text-muted-foreground">
+            Esta línea visual está inspirada en tu logo para que la marca se sienta médica, limpia y
+            confiable.
+          </p>
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="precio">Precio en dólares ($)</Label>
-          <Input
-            id="precio"
-            inputMode="decimal"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            placeholder="3.50"
-            className="h-12 text-base tabular"
-          />
-        </div>
-        <Button type="submit" className="w-full py-4 text-base font-semibold">
-          Agregar producto
-        </Button>
-      </form>
 
-      <ul className="divide-y">
-        {productos.map((p) => (
-          <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{p.nombre}</p>
-              <p className="text-xs tabular text-muted-foreground">
-                {fmtUsd(p.precioUsd)}
-                {tasa > 0 ? ` · ${fmtBs(p.precioUsd * tasa)}` : ""}
-              </p>
-            </div>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label={`Eliminar ${p.nombre}`}
-              onClick={() => persistir(productos.filter((x) => x.id !== p.id))}
-            >
-              <Trash2 className="text-destructive" />
-            </Button>
-          </li>
-        ))}
-      </ul>
+        <div className="grid grid-cols-2 gap-3">
+          {PRODUCTOS_DEMO.map((p) => {
+            const Icon =
+              ICONOS_POR_CATEGORIA[p.categoria as keyof typeof ICONOS_POR_CATEGORIA] ?? p.icono;
+            return (
+              <article
+                key={p.id}
+                className="rounded-3xl bg-card p-4 shadow-card ring-1 ring-border"
+              >
+                <div className="flex flex-col gap-3">
+                  <span className="grid size-12 place-items-center rounded-3xl bg-brand/10 text-brand">
+                    <Icon className="size-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-brand">
+                      {p.categoria}
+                    </p>
+                    <h2 className="mt-1 text-base font-semibold leading-snug">{p.categoria}</h2>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-end justify-between">
+                  <div>
+                    <p className="font-display text-lg font-semibold">
+                      {fmtRef(p.precioUsd)}
+                    </p>
+                    {tasa > 0 && (
+                      <p className="text-xs tabular text-muted-foreground">
+                        {fmtBs(p.precioUsd * tasa)}
+                      </p>
+                    )}
+                  </div>
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                    Disponible
+                  </span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }
