@@ -315,7 +315,7 @@ function PuntoDeVenta() {
               <Input
                 id="tel"
                 inputMode="tel"
-                placeholder="584241468579"
+                placeholder="04241468579"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 className="h-12 text-base"
