@@ -20,7 +20,7 @@ import {
   cargarNegocio,
   cargarProductos,
   cargarTasaGuardada,
-  crearFacturaHtml,
+  descargarFacturaPdf,
   fmtBs,
   fmtRef,
   fmtUsd,
@@ -141,8 +141,8 @@ function PuntoDeVenta() {
       return copia;
     });
 
-  const descargarFacturaPdf = () => {
-    const html = crearFacturaHtml({
+  const generarFacturaPdf = () => {
+    descargarFacturaPdf({
       datos: {
         numero: numeroFactura,
         fecha: new Date(),
@@ -163,16 +163,6 @@ function PuntoDeVenta() {
       },
       lineas,
     });
-
-    const win = window.open("", "_blank", "noopener,noreferrer");
-    if (!win) return;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => {
-      win.print();
-    }, 400);
   };
 
   return (
@@ -446,7 +436,7 @@ function PuntoDeVenta() {
 
             <Button
               className="whatsapp-gradient w-full py-4 text-base font-semibold text-success-foreground hover:opacity-95"
-              onClick={descargarFacturaPdf}
+              onClick={generarFacturaPdf}
             >
               Generar factura PDF
             </Button>

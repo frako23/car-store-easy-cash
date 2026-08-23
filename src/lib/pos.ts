@@ -1,3 +1,4 @@
+import { jsPDF } from "jspdf";
 import { BatteryCharging, CarFront, Disc3, Filter, Fuel, Gauge, Sparkles, type LucideIcon } from "lucide-react";
 
 export type Producto = {
@@ -247,4 +248,94 @@ export function crearFacturaHtml(opts: {
 </body>
 </html>
   `;
+}
+
+export function descargarFacturaPdf(opts: {
+  datos: DatosFactura;
+  lineas: LineaCarrito[];
+}) {
+  const { datos, lineas } = opts;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const margenX = 14;
+  let y = 16;
+  const ancho = 210 - margenX * 2;
+  const totales = calcularFactura(lineas, datos.ivaPorcentaje);
+  const fechaHora = formatearFechaFactura(datos.fecha);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Factura", margenX, y);
+
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text(datos.negocio, margenX, y + 7);
+  doc.text(datos.direccionEmisor, margenX, y + 12);
+  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX, y + 17);
+  doc.setFont("helvetica", "bold");
+  doc.text(`N° ${datos.numero}`, 210 - margenX, y + 2, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.text(`Fecha: ${fechaHora.fecha}`, 210 - margenX, y + 8, { align: "right" });
+  doc.text(`Hora: ${fechaHora.hora}`, 210 - margenX, y + 13, { align: "right" });
+
+  y += 28;
+  doc.setDrawColor(209, 213, 219);
+  doc.roundedRect(margenX, y, ancho, 24, 3, 3, "S");
+  doc.setFont("helvetica", "bold");
+  doc.text("Cliente", margenX + 3, y + 6);
+  doc.setFont("helvetica", "normal");
+  doc.text(datos.clienteNombre || "Consumidor final", margenX + 3, y + 11);
+  doc.text(datos.clienteDocumento || "C.I. / RIF no indicado", margenX + 3, y + 16);
+  doc.text(datos.metodoPago, margenX + 3, y + 21);
+
+  doc.text(`Tasa: ${fmtBs(datos.tasa)} por 1 $`, margenX + 103, y + 11);
+  doc.text(`Moneda: ${datos.monedaReferencia.toUpperCase()}`, margenX + 103, y + 16);
+  doc.text(datos.clienteTelefono || "", margenX + 103, y + 21);
+
+  y += 31;
+  doc.setFont("helvetica", "bold");
+  doc.text("Detalle", margenX, y);
+  y += 4;
+
+  const header = ["Cant.", "Descripción", "Unit. USD", "Subtotal USD", "Subtotal Bs"];
+  const colX = [margenX, margenX + 16, margenX + 84, margenX + 120, margenX + 154];
+  doc.setFontSize(9);
+  header.forEach((h, i) => doc.text(h, colX[i], y));
+  y += 2;
+  doc.line(margenX, y, 210 - margenX, y);
+  y += 5;
+  doc.setFont("helvetica", "normal");
+
+  lineas.forEach((l) => {
+    const subtotalUsd = l.producto.precioUsd * l.cantidad;
+    const subtotalBs = subtotalUsd * datos.tasa;
+    const descripcion = doc.splitTextToSize(l.producto.nombre, 64);
+    doc.text(String(l.cantidad), colX[0], y);
+    doc.text(descripcion, colX[1], y);
+    doc.text(fmtUsd(l.producto.precioUsd), colX[2], y);
+    doc.text(fmtUsd(subtotalUsd), colX[3], y);
+    doc.text(fmtBs(subtotalBs), colX[4], y);
+    y += Math.max(6, descripcion.length * 4 + 1);
+    if (y > 260) {
+      doc.addPage();
+      y = 16;
+    }
+  });
+
+  y += 4;
+  doc.line(margenX, y, 210 - margenX, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.text(`Base imponible: ${fmtUsd(totales.baseUsd)} | ${fmtBs(totales.baseBs * datos.tasa)}`, margenX, y);
+  y += 6;
+  doc.text(`IVA ${datos.ivaPorcentaje}%: ${fmtUsd(totales.ivaUsd)} | ${fmtBs(totales.ivaBs * datos.tasa)}`, margenX, y);
+  y += 7;
+  doc.setFont("helvetica", "bold");
+  doc.text(`Total: ${fmtUsd(totales.totalUsd)} | ${fmtBs(totales.totalBs * datos.tasa)}`, margenX, y);
+
+  y += 12;
+  doc.setFont("helvetica", "normal");
+  const observaciones = doc.splitTextToSize(`Observaciones: ${datos.observaciones || "Sin observaciones."}`, ancho);
+  doc.text(observaciones, margenX, y);
+
+  doc.save(`${datos.numero}.pdf`);
 }
