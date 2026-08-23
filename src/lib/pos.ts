@@ -268,11 +268,12 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
         <h1>Factura</h1>
         <div class="muted">${datos.negocio}</div>
         <div class="muted">${datos.direccionEmisor}</div>
+        <div class="muted">Email: ${datos.clienteEmail || "jriceno1@gmail.com"}</div>
         <div class="muted">RIF: ${datos.rifEmisor} | Teléfono: ${datos.telefonoEmisor}</div>
         </div>
       </div>
       <div style="text-align:right">
-            <img src="/logo3.jpg" width="200" height="auto" alt="Logo" />
+            <img src="/logo3.jpg" style="width:250px; height:auto;" alt="Logo" />
         <h2>N° ${datos.numero}</h2>
         <div class="muted">Fecha: ${fechaHora.fecha}</div>
         <div class="muted">Hora: ${fechaHora.hora}</div>
@@ -349,29 +350,31 @@ export async function descargarFacturaPdf(opts: { datos: DatosFactura; lineas: L
   const logo = await cargarImagenDataUrl("/logo3.jpg");
   const qr = await cargarImagenDataUrl("/qr.jpeg");
   const props = doc.getImageProperties(logo);
-  const logoW = 18;
+  const logoW = 50;
   const logoH = (props.height * logoW) / props.width;
   const qrProps = doc.getImageProperties(qr);
   const qrW = 42;
   const qrH = (qrProps.height * qrW) / qrProps.width;
 
-  doc.addImage(logo, "JPEG", margenX, y - 2, logoW, logoH);
+  doc.addImage(logo, "JPEG", 210 / 2 - logoW / 2, y - 2, logoW, logoH);
+  y += logoH + 4;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Factura", margenX + logoW + 4, y + 4);
+  doc.text("Factura", margenX, y + 4);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(datos.negocio, margenX + logoW + 4, y + 11);
-  doc.text(datos.direccionEmisor, margenX + logoW + 4, y + 16);
-  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX + logoW + 4, y + 21);
+  doc.text(datos.negocio, margenX, y + 11);
+  doc.text(datos.direccionEmisor, margenX, y + 16);
+  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX, y + 21);
+  doc.text(`Email: ${datos.clienteEmail || "jriceno1@gmail.com"}`, margenX, y + 26);
   doc.setFont("helvetica", "bold");
-  doc.text(`N° ${datos.numero}`, 210 - margenX, y + 2, { align: "right" });
+  doc.text(`N° ${datos.numero}`, 210 - margenX, y + 4, { align: "right" });
   doc.setFont("helvetica", "normal");
-  doc.text(`Fecha: ${fechaHora.fecha}`, 210 - margenX, y + 8, { align: "right" });
-  doc.text(`Hora: ${fechaHora.hora}`, 210 - margenX, y + 13, { align: "right" });
+  doc.text(`Fecha: ${fechaHora.fecha}`, 210 - margenX, y + 10, { align: "right" });
+  doc.text(`Hora: ${fechaHora.hora}`, 210 - margenX, y + 15, { align: "right" });
 
-  y += 28;
+  y += 33;
   doc.setDrawColor(209, 213, 219);
   doc.roundedRect(margenX, y, ancho, 24, 3, 3, "S");
   doc.setFont("helvetica", "bold");

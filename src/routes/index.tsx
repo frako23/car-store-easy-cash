@@ -25,6 +25,7 @@ import {
   fmtUsd,
   guardarNegocio,
   guardarTasa,
+  PRODUCTOS_DEMO,
   type LineaCarrito,
   type Producto,
 } from "@/lib/pos";
@@ -60,7 +61,7 @@ function PuntoDeVenta() {
   const [carrito, setCarrito] = useState<Record<string, number>>({});
   const [tasaManual, setTasaManual] = useState<number | null>(null);
   const [monedaTasa, setMonedaTasa] = useState<"usd" | "eur">("usd");
-  const [negocio, setNegocio] = useState("Autorepuestos Easy Cash");
+  const [negocio, setNegocio] = useState("Emprendimiento José Briceño 70");
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteDocumento, setClienteDocumento] = useState("");
   const [clienteDireccion, setClienteDireccion] = useState("");
@@ -165,9 +166,9 @@ function PuntoDeVenta() {
         numero: numeroFactura,
         fecha: new Date(),
         negocio,
-        rifEmisor: "J-5522202-0",
-        direccionEmisor: "Autorepuestos Easy Cash, Venezuela",
-        telefonoEmisor: "0424-1468579",
+        rifEmisor: "402611900",
+        direccionEmisor: "Urb. Lomas de Urquia KM 18, Carrizal, Los Teques",
+        telefonoEmisor: "04120170676",
         clienteNombre,
         clienteDocumento,
         clienteDireccion,
@@ -180,6 +181,37 @@ function PuntoDeVenta() {
         observaciones: "Factura generada desde el sistema digital de ventas.",
       },
       lineas,
+    });
+  };
+
+  const generarFacturaEjemplo = () => {
+    const producto = (id: string) => productos.find((p) => p.id === id) ?? PRODUCTOS_DEMO.find((p) => p.id === id);
+    const ejemploLineas: LineaCarrito[] = [
+      { producto: producto("f1") ?? PRODUCTOS_DEMO[0], cantidad: 2 },
+      { producto: producto("fi1") ?? PRODUCTOS_DEMO[4], cantidad: 3 },
+      { producto: producto("b1") ?? PRODUCTOS_DEMO[6], cantidad: 1 },
+    ];
+
+    void descargarFacturaPdf({
+      datos: {
+        numero: `FAC-DEM-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
+        fecha: new Date(),
+        negocio,
+        rifEmisor: "402611900",
+        direccionEmisor: "Urb. Lomas de Urquia KM 18, Carrizal, Los Teques",
+        telefonoEmisor: "04120170676",
+        clienteNombre: "Cliente de prueba",
+        clienteDocumento: "V-12345678",
+        clienteDireccion: "Av. Principal, Caracas",
+        clienteTelefono: "0412-0000000",
+        clienteEmail: "jriceno1@gmail.com",
+        monedaReferencia: monedaTasa,
+        tasa,
+        ivaPorcentaje: 16,
+        metodoPago: "Transferencia / pago móvil",
+        observaciones: "Factura de ejemplo para verificar el diseño del PDF.",
+      },
+      lineas: ejemploLineas,
     });
   };
 
@@ -458,6 +490,9 @@ function PuntoDeVenta() {
             >
               Generar factura PDF
             </Button>
+            <Button variant="outline" className="w-full py-4 text-base font-semibold" onClick={generarFacturaEjemplo}>
+              Ver factura de ejemplo
+            </Button>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -536,8 +571,8 @@ function PuntoDeVenta() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                setNegocio("Autorepuestos Easy Cash");
-                guardarNegocio("Autorepuestos Easy Cash");
+                setNegocio("Emprendimiento José Briceño 70");
+                guardarNegocio("Emprendimiento José Briceño 70");
               }}
             >
               Restaurar marca base
