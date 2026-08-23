@@ -264,7 +264,6 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
   <div class="page">
     <div class="header">
       <div class="brand">
-        <img src="/logo3.jpg" alt="Logo" />
         <div>
         <h1>Factura</h1>
         <div class="muted">${datos.negocio}</div>
@@ -273,6 +272,7 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
         </div>
       </div>
       <div style="text-align:right">
+            <img src="/logo3.jpg" width="200" height="auto" alt="Logo" />
         <h2>N° ${datos.numero}</h2>
         <div class="muted">Fecha: ${fechaHora.fecha}</div>
         <div class="muted">Hora: ${fechaHora.hora}</div>
