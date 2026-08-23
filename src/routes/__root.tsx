@@ -77,17 +77,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Uniformes Médicos | Venta móvil" },
+      { title: "Autorepuestos Easy Cash | Venta móvil" },
       {
         name: "description",
-        content:
-          "Catálogo mobile first de uniformes médicos, batas, chaquetas y suéteres con precios en Bs y $.",
+        content: "Catálogo mobile first de repuestos automotrices con precios en Bs y $.",
       },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Uniformes Médicos" },
+      { property: "og:title", content: "Autorepuestos Easy Cash" },
       {
         property: "og:description",
-        content: "Compra rápida de uniformes médicos desde el celular.",
+        content: "Compra rápida de repuestos automotrices desde el celular.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -100,7 +99,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Figtree:wght@400;500;600&display=swap",
       },
     ],
   }),
@@ -112,7 +111,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

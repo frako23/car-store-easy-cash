@@ -1,6 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { RefreshCw, Search, Settings, Trash2 } from "lucide-react";
+import {
+  CarFront,
+  MoonStar,
+  RefreshCw,
+  Search,
+  Settings,
+  ShoppingBag,
+  SunMedium,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -11,31 +20,33 @@ import {
   cargarNegocio,
   cargarProductos,
   cargarTasaGuardada,
+  crearFacturaHtml,
   fmtBs,
   fmtRef,
   fmtUsd,
   guardarNegocio,
   guardarTasa,
-  mensajeWhatsapp,
   type LineaCarrito,
   type Producto,
 } from "@/lib/pos";
 import { getTasa } from "@/lib/tasa.functions";
 
+const THEME_KEY = "pos.theme";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Uniformes Médicos | Uniformes.Médicoss" },
+      { title: "Autorepuestos Easy Cash | Tienda de repuestos" },
       {
         name: "description",
         content:
-          "Catálogo mobile first de uniformes médicos, batas, chaquetas y suéteres con precios en REF y conversión a bolívares.",
+          "Catálogo mobile first para una tienda de repuestos automotrices con precios en REF y conversión a bolívares.",
       },
-      { property: "og:title", content: "Uniformes Médicos" },
+      { property: "og:title", content: "Autorepuestos Easy Cash" },
       {
         property: "og:description",
         content:
-          "Compra rápida de uniformes médicos con vista clara, moderna y pensada para WhatsApp.",
+          "Compra rápida de repuestos automotrices con una interfaz moderna, clara y pensada para WhatsApp.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -50,17 +61,38 @@ function PuntoDeVenta() {
   const [carrito, setCarrito] = useState<Record<string, number>>({});
   const [tasaManual, setTasaManual] = useState<number | null>(null);
   const [monedaTasa, setMonedaTasa] = useState<"usd" | "eur">("usd");
-  const [negocio, setNegocio] = useState("Uniformes Médicos");
-  const [telefono, setTelefono] = useState("");
+  const [negocio, setNegocio] = useState("Autorepuestos Easy Cash");
+  const [clienteNombre, setClienteNombre] = useState("");
+  const [clienteDocumento, setClienteDocumento] = useState("");
+  const [clienteDireccion, setClienteDireccion] = useState("");
+  const [clienteTelefono, setClienteTelefono] = useState("");
+  const [clienteEmail, setClienteEmail] = useState("");
+  const [metodoPago, setMetodoPago] = useState("Transferencia / pago móvil");
+  const [numeroFactura, setNumeroFactura] = useState(
+    () =>
+      `FAC-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${Math.floor(Math.random() * 9000 + 1000)}`,
+  );
   const [abrirCobro, setAbrirCobro] = useState(false);
   const [abrirAjustes, setAbrirAjustes] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     setProductos(cargarProductos());
     setTasaManual(cargarTasaGuardada());
     setNegocio(cargarNegocio());
-    setMonedaTasa("eur");
+    setMonedaTasa("usd");
+    const savedTheme = window.localStorage.getItem(THEME_KEY);
+    setDarkMode(
+      savedTheme
+        ? savedTheme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    window.localStorage.setItem(THEME_KEY, darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   const tasaQuery = useQuery({
     queryKey: ["tasa"],
@@ -92,7 +124,11 @@ function PuntoDeVenta() {
 
   const filtrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    return q ? productos.filter((p) => p.categoria.toLowerCase().includes(q)) : productos;
+    return q
+      ? productos.filter(
+          (p) => p.categoria.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q),
+        )
+      : productos;
   }, [busqueda, productos]);
 
   const agregar = (id: string) => setCarrito((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
@@ -105,32 +141,60 @@ function PuntoDeVenta() {
       return copia;
     });
 
-  const enviarWhatsapp = () => {
-    const texto = mensajeWhatsapp({ negocio, lineas, tasa, totalUsd });
-    // const num = "584241468579";
-    const url = `https://wa.me/+58${telefono}?text=${encodeURIComponent(texto)}`;
-    window.open(url, "_blank");
+  const descargarFacturaPdf = () => {
+    const html = crearFacturaHtml({
+      datos: {
+        numero: numeroFactura,
+        fecha: new Date(),
+        negocio,
+        rifEmisor: "J-5522202-0",
+        direccionEmisor: "Autorepuestos Easy Cash, Venezuela",
+        telefonoEmisor: "0424-1468579",
+        clienteNombre,
+        clienteDocumento,
+        clienteDireccion,
+        clienteTelefono,
+        clienteEmail,
+        monedaReferencia: monedaTasa,
+        tasa,
+        ivaPorcentaje: 16,
+        metodoPago,
+        observaciones: "Factura generada desde el sistema digital de ventas.",
+      },
+      lineas,
+    });
+
+    const win = window.open("", "_blank", "noopener,noreferrer");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+    }, 400);
   };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background pb-36">
-      <header className="hero sticky top-0 z-20 px-4 pb-4 pt-5 text-brand-foreground shadow-card">
+      <header className="hero sticky top-0 z-20 px-4 pb-4 pt-5 text-white shadow-card">
         <div className="relative z-10 flex items-center gap-3">
-          <img
-            src="/logo.jpg"
-            alt="Uniformes Médicos"
-            className="size-14 rounded-2xl border border-white/20 bg-white object-cover shadow-card"
-          />
+          <div className="grid size-14 place-items-center rounded-2xl bg-white/15 text-white shadow-card ring-1 ring-white/20">
+            <CarFront className="size-7" />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-[0.28em] text-white/80">Catálogo médico</p>
-            <h1 className="truncate font-display text-xl font-semibold">{negocio}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/80">
-              <span className="rounded-full bg-white/12 px-2.5 py-1 font-medium">
-                USD {tasaQuery.data?.usd ? fmtBs(tasaQuery.data.usd) : "..."}
-              </span>
-              <span className="rounded-full bg-white/12 px-2.5 py-1 font-medium">
-                EUR {tasaQuery.data?.eur ? fmtBs(tasaQuery.data.eur) : "..."}
-              </span>
+            <p className="text-xs uppercase tracking-[0.28em] text-white/70">Tienda de repuestos</p>
+            <h1 className="truncate font-display text-xl font-semibold text-white">{negocio}</h1>
+            <div className="mt-2 flex  items-center gap-2 text-xs text-white/80">
+              <div className="flex flex-col items-center rounded-full bg-white/12 px-2.5 py-1 font-medium leading-tight">
+                <span>USD</span>
+                <span>{tasaQuery.data?.usd ? fmtBs(tasaQuery.data.usd) : "..."}</span>
+              </div>
+              <div className="flex flex-col items-center rounded-full bg-white/12 px-2.5 py-1 font-medium leading-tight">
+                <span>EUR</span>
+                <span>{tasaQuery.data?.eur ? fmtBs(tasaQuery.data.eur) : "..."}</span>
+              </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -143,50 +207,68 @@ function PuntoDeVenta() {
               </button>
             </div>
           </div>
-          <div className="flex gap-1">
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Vaciar selección"
-              className="text-brand-foreground hover:bg-white/10"
-              onClick={() => setCarrito({})}
-            >
-              <Trash2 />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Actualizar tasa"
-              className="text-brand-foreground hover:bg-white/10"
-              onClick={() => {
-                setTasaManual(null);
-                tasaQuery.refetch();
-              }}
-            >
-              <RefreshCw className={tasaQuery.isFetching ? "animate-spin" : ""} />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Ajustes"
-              className="text-brand-foreground hover:bg-white/10"
-              onClick={() => setAbrirAjustes(true)}
-            >
-              <Settings />
-            </Button>
+          <div>
+            <div className="flex gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Modo oscuro"
+                className="text-white hover:bg-white/10"
+                onClick={() => setDarkMode((v) => !v)}
+              >
+                {darkMode ? <SunMedium /> : <MoonStar />}
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Vaciar selección"
+                className="text-white hover:bg-white/10"
+                onClick={() => setCarrito({})}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Actualizar tasa"
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  setTasaManual(null);
+                  tasaQuery.refetch();
+                }}
+              >
+                <RefreshCw className={tasaQuery.isFetching ? "animate-spin" : ""} />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label="Ajustes"
+                className="text-white hover:bg-white/10"
+                onClick={() => setAbrirAjustes(true)}
+              >
+                <Settings />
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="relative z-10 mt-4 rounded-3xl bg-white/15 p-3 backdrop-blur-sm">
-          <p className="text-sm font-medium">Uniformes, batas, chaquetas y suéteres</p>
-          <p className="text-xs text-white/75">Venta rápida, visual y pensada para mobile first.</p>
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <ShoppingBag className="size-4" />
+            Frenos, motores, filtros, baterías y más
+          </div>
+          <p className="mt-1 text-xs text-white/75">
+            Venta rápida, visual y pensada para mostrador o factura PDF.
+          </p>
           <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-white/60" />
             <Input
               inputMode="search"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por categoría..."
+              placeholder="Buscar repuestos o categorías..."
               className="h-12 rounded-2xl border-0 bg-white pl-9 text-base text-foreground"
             />
           </div>
@@ -218,7 +300,7 @@ function PuntoDeVenta() {
                     {p.categoria}
                   </p>
                   <span className="mt-1 block text-base font-semibold leading-snug text-foreground">
-                    {p.categoria}
+                    {p.nombre}
                   </span>
                 </div>
               </div>
@@ -265,7 +347,7 @@ function PuntoDeVenta() {
             {lineas.map((l) => (
               <div key={l.producto.id} className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{l.producto.categoria}</p>
+                  <p className="truncate text-sm font-medium">{l.producto.nombre}</p>
                   <p className="text-xs tabular text-muted-foreground">
                     {fmtUsd(l.producto.precioUsd * l.cantidad)} ·{" "}
                     {fmtRef(l.producto.precioUsd * l.cantidad * tasa)} ·{" "}
@@ -311,22 +393,62 @@ function PuntoDeVenta() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="tel">WhatsApp del comprador (opcional)</Label>
+              <Label htmlFor="numeroFactura">Número de factura</Label>
               <Input
-                id="tel"
+                id="numeroFactura"
+                value={numeroFactura}
+                onChange={(e) => setNumeroFactura(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="clienteNombre">Nombre del cliente</Label>
+              <Input
+                id="clienteNombre"
+                value={clienteNombre}
+                onChange={(e) => setClienteNombre(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="clienteDocumento">C.I. o RIF del cliente</Label>
+              <Input
+                id="clienteDocumento"
+                value={clienteDocumento}
+                onChange={(e) => setClienteDocumento(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="clienteDireccion">Dirección del cliente</Label>
+              <Input
+                id="clienteDireccion"
+                value={clienteDireccion}
+                onChange={(e) => setClienteDireccion(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="clienteTelefono">Teléfono del cliente</Label>
+              <Input
+                id="clienteTelefono"
                 inputMode="tel"
-                placeholder="04241468579"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="04141234567"
+                value={clienteTelefono}
+                onChange={(e) => setClienteTelefono(e.target.value)}
                 className="h-12 text-base"
               />
             </div>
 
             <Button
               className="whatsapp-gradient w-full py-4 text-base font-semibold text-success-foreground hover:opacity-95"
-              onClick={enviarWhatsapp}
+              onClick={descargarFacturaPdf}
             >
-              Enviar por WhatsApp
+              Generar factura PDF
             </Button>
             <div className="flex gap-2">
               <Button
@@ -350,9 +472,30 @@ function PuntoDeVenta() {
       <Sheet open={abrirAjustes} onOpenChange={setAbrirAjustes}>
         <SheetContent side="bottom" className="mx-auto max-w-md rounded-t-3xl">
           <SheetHeader className="px-0">
-            <SheetTitle className="font-display">Ajustes de marca</SheetTitle>
+            <SheetTitle className="font-display">Ajustes de tienda</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="clienteEmail">Correo del cliente</Label>
+              <Input
+                id="clienteEmail"
+                type="email"
+                value={clienteEmail}
+                onChange={(e) => setClienteEmail(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="metodoPago">Método de pago</Label>
+              <Input
+                id="metodoPago"
+                value={metodoPago}
+                onChange={(e) => setMetodoPago(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="negocio">Nombre del negocio</Label>
               <Input
@@ -385,8 +528,8 @@ function PuntoDeVenta() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                setNegocio("Uniformes Médicos");
-                guardarNegocio("Uniformes Médicos");
+                setNegocio("Autorepuestos Easy Cash");
+                guardarNegocio("Autorepuestos Easy Cash");
               }}
             >
               Restaurar marca base
