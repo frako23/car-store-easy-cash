@@ -237,7 +237,7 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
     .page { max-width: 210mm; margin: 0 auto; background: white; padding: 16mm; min-height: 297mm; box-sizing: border-box; }
     .header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; align-items: center; }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .brand img { width: 56px; height: 56px; object-fit: cover; border-radius: 14px; }
+    .brand img { width: 56px; height: auto; max-height: 56px; object-fit: contain; border-radius: 14px; }
     h1 { margin: 0; font-size: 24px; }
     h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; }
     .muted { color: #6b7280; font-size: 12px; line-height: 1.4; }
@@ -252,6 +252,8 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
     .totals div { display: flex; justify-content: space-between; gap: 24px; min-width: 280px; font-size: 13px; }
     .totals strong { font-size: 15px; }
     .footer { margin-top: 18px; font-size: 11px; color: #6b7280; }
+    .qr { margin-top: 18px; display: flex; justify-content: flex-end; }
+    .qr img { width: 42mm; height: auto; }
     @media print {
       body { background: white; }
       .page { min-height: auto; padding: 0; }
@@ -326,6 +328,10 @@ export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarri
     <div class="footer">
       Documento emitido conforme a los requisitos generales de facturación aplicables en Venezuela. Verificar condiciones fiscales específicas del contribuyente antes de su uso oficial.
     </div>
+
+    <div class="qr">
+      <img src="/qr.jpeg" alt="QR de pago" />
+    </div>
   </div>
 </body>
 </html>
@@ -341,17 +347,24 @@ export async function descargarFacturaPdf(opts: { datos: DatosFactura; lineas: L
   const totales = calcularFactura(lineas, datos.ivaPorcentaje);
   const fechaHora = formatearFechaFactura(datos.fecha);
   const logo = await cargarImagenDataUrl("/logo3.jpg");
+  const qr = await cargarImagenDataUrl("/qr.jpeg");
+  const props = doc.getImageProperties(logo);
+  const logoW = 18;
+  const logoH = (props.height * logoW) / props.width;
+  const qrProps = doc.getImageProperties(qr);
+  const qrW = 42;
+  const qrH = (qrProps.height * qrW) / qrProps.width;
 
-  doc.addImage(logo, "JPEG", margenX, y - 2, 18, 18);
+  doc.addImage(logo, "JPEG", margenX, y - 2, logoW, logoH);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Factura", margenX + 22, y + 4);
+  doc.text("Factura", margenX + logoW + 4, y + 4);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(datos.negocio, margenX + 22, y + 11);
-  doc.text(datos.direccionEmisor, margenX + 22, y + 16);
-  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX + 22, y + 21);
+  doc.text(datos.negocio, margenX + logoW + 4, y + 11);
+  doc.text(datos.direccionEmisor, margenX + logoW + 4, y + 16);
+  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX + logoW + 4, y + 21);
   doc.setFont("helvetica", "bold");
   doc.text(`N° ${datos.numero}`, 210 - margenX, y + 2, { align: "right" });
   doc.setFont("helvetica", "normal");
@@ -425,13 +438,15 @@ export async function descargarFacturaPdf(opts: { datos: DatosFactura; lineas: L
     y,
   );
 
-  y += 12;
+  y += 10;
   doc.setFont("helvetica", "normal");
   const observaciones = doc.splitTextToSize(
     `Observaciones: ${datos.observaciones || "Sin observaciones."}`,
     ancho,
   );
   doc.text(observaciones, margenX, y);
+
+  doc.addImage(qr, "JPEG", 210 - margenX - qrW, 297 - 16 - qrH, qrW, qrH);
 
   doc.save(`${datos.numero}.pdf`);
 }

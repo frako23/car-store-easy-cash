@@ -142,11 +142,18 @@ function PuntoDeVenta() {
 
   const generarFacturaPdf = () => {
     const telefono = clienteTelefono.replace(/\D/g, "");
+    const totalBs = totalUsd * tasa;
     const saludo = [
       `Hola ${clienteNombre || "estimado cliente"},`,
       "te estamos preparando tu factura digital en PDF.",
       "En breve te la haremos llegar por este medio.",
-    ].join(" ");
+      "",
+      "Datos para pago móvil:",
+      "04120170676",
+      "10284009",
+      "0105 (Mercantil)",
+      `Bs ${fmtBs(totalBs).replace(/^Bs\s*/, "")}`,
+    ].join("\n");
 
     if (telefono) {
       const url = `https://wa.me/58${telefono}?text=${encodeURIComponent(saludo)}`;
