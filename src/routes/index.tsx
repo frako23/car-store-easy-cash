@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  CarFront,
   MoonStar,
   RefreshCw,
   Search,
@@ -154,7 +153,7 @@ function PuntoDeVenta() {
       window.open(url, "_blank", "noopener,noreferrer");
     }
 
-    descargarFacturaPdf({
+    void descargarFacturaPdf({
       datos: {
         numero: numeroFactura,
         fecha: new Date(),
@@ -181,8 +180,8 @@ function PuntoDeVenta() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col bg-background pb-36">
       <header className="hero sticky top-0 z-20 px-4 pb-4 pt-5 text-white shadow-card">
         <div className="relative z-10 flex items-center gap-3">
-          <div className="grid size-14 place-items-center rounded-2xl bg-white/15 text-white shadow-card ring-1 ring-white/20">
-            <CarFront className="size-7" />
+          <div className="grid size-14 place-items-center overflow-hidden rounded-2xl bg-white/15 text-white shadow-card ring-1 ring-white/20">
+            <img src="/logo.jpg" alt="Logo" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-[0.28em] text-white/70">Tienda de repuestos</p>

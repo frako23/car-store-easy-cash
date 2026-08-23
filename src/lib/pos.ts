@@ -1,5 +1,14 @@
 import { jsPDF } from "jspdf";
-import { BatteryCharging, CarFront, Disc3, Filter, Fuel, Gauge, Sparkles, type LucideIcon } from "lucide-react";
+import {
+  BatteryCharging,
+  CarFront,
+  Disc3,
+  Filter,
+  Fuel,
+  Gauge,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 
 export type Producto = {
   id: string;
@@ -47,17 +56,77 @@ const KEY_TASA = "pos.tasa";
 const KEY_NEGOCIO = "pos.negocio";
 
 export const PRODUCTOS_DEMO: Producto[] = [
-  { id: "f1", nombre: "Pastillas de freno cerámicas", precioUsd: 38, icono: Disc3, categoria: "Frenos" },
-  { id: "f2", nombre: "Discos ventilados delanteros", precioUsd: 96, icono: Disc3, categoria: "Frenos" },
-  { id: "m1", nombre: "Kit de cadena de tiempo", precioUsd: 124, icono: CarFront, categoria: "Motor" },
+  {
+    id: "f1",
+    nombre: "Pastillas de freno cerámicas",
+    precioUsd: 38,
+    icono: Disc3,
+    categoria: "Frenos",
+  },
+  {
+    id: "f2",
+    nombre: "Discos ventilados delanteros",
+    precioUsd: 96,
+    icono: Disc3,
+    categoria: "Frenos",
+  },
+  {
+    id: "m1",
+    nombre: "Kit de cadena de tiempo",
+    precioUsd: 124,
+    icono: CarFront,
+    categoria: "Motor",
+  },
   { id: "m2", nombre: "Bomba de agua", precioUsd: 52, icono: CarFront, categoria: "Motor" },
-  { id: "fi1", nombre: "Filtro de aceite premium", precioUsd: 14, icono: Filter, categoria: "Filtros" },
-  { id: "fi2", nombre: "Filtro de aire de cabina", precioUsd: 18, icono: Filter, categoria: "Filtros" },
-  { id: "b1", nombre: "Batería 12V 60Ah", precioUsd: 118, icono: BatteryCharging, categoria: "Batería" },
-  { id: "b2", nombre: "Batería 12V 75Ah", precioUsd: 154, icono: BatteryCharging, categoria: "Batería" },
-  { id: "l1", nombre: "Juego de bombillos LED", precioUsd: 26, icono: Sparkles, categoria: "Iluminación" },
-  { id: "c1", nombre: "Bomba de combustible", precioUsd: 74, icono: Fuel, categoria: "Combustible" },
-  { id: "i1", nombre: "Sensor de temperatura", precioUsd: 22, icono: Gauge, categoria: "Instrumentos" },
+  {
+    id: "fi1",
+    nombre: "Filtro de aceite premium",
+    precioUsd: 14,
+    icono: Filter,
+    categoria: "Filtros",
+  },
+  {
+    id: "fi2",
+    nombre: "Filtro de aire de cabina",
+    precioUsd: 18,
+    icono: Filter,
+    categoria: "Filtros",
+  },
+  {
+    id: "b1",
+    nombre: "Batería 12V 60Ah",
+    precioUsd: 118,
+    icono: BatteryCharging,
+    categoria: "Batería",
+  },
+  {
+    id: "b2",
+    nombre: "Batería 12V 75Ah",
+    precioUsd: 154,
+    icono: BatteryCharging,
+    categoria: "Batería",
+  },
+  {
+    id: "l1",
+    nombre: "Juego de bombillos LED",
+    precioUsd: 26,
+    icono: Sparkles,
+    categoria: "Iluminación",
+  },
+  {
+    id: "c1",
+    nombre: "Bomba de combustible",
+    precioUsd: 74,
+    icono: Fuel,
+    categoria: "Combustible",
+  },
+  {
+    id: "i1",
+    nombre: "Sensor de temperatura",
+    precioUsd: 22,
+    icono: Gauge,
+    categoria: "Instrumentos",
+  },
 ];
 
 export function cargarProductos(): Producto[] {
@@ -79,8 +148,8 @@ export function guardarTasa(tasa: number) {
 }
 
 export function cargarNegocio(): string {
-  if (typeof window === "undefined") return "Autorepuestos Easy Cash";
-  return window.localStorage.getItem(KEY_NEGOCIO) ?? "Autorepuestos Easy Cash";
+  if (typeof window === "undefined") return "Emprendimiento José Briceño 70";
+  return window.localStorage.getItem(KEY_NEGOCIO) ?? "Emprendimiento José Briceño 70";
 }
 
 export function guardarNegocio(nombre: string) {
@@ -109,6 +178,17 @@ export function formatearFechaFactura(fecha: Date) {
   };
 }
 
+async function cargarImagenDataUrl(url: string): Promise<string> {
+  const respuesta = await fetch(url);
+  const blob = await respuesta.blob();
+  return await new Promise<string>((resolve, reject) => {
+    const lector = new FileReader();
+    lector.onerror = () => reject(new Error(`No se pudo leer la imagen ${url}`));
+    lector.onload = () => resolve(String(lector.result));
+    lector.readAsDataURL(blob);
+  });
+}
+
 export function calcularFactura(lineas: LineaCarrito[], ivaPorcentaje: number) {
   const baseUsd = lineas.reduce((s, l) => s + l.producto.precioUsd * l.cantidad, 0);
   const ivaUsd = baseUsd * (ivaPorcentaje / 100);
@@ -124,10 +204,7 @@ export function calcularFactura(lineas: LineaCarrito[], ivaPorcentaje: number) {
   };
 }
 
-export function crearFacturaHtml(opts: {
-  datos: DatosFactura;
-  lineas: LineaCarrito[];
-}) {
+export function crearFacturaHtml(opts: { datos: DatosFactura; lineas: LineaCarrito[] }) {
   const { datos, lineas } = opts;
   const totales = calcularFactura(lineas, datos.ivaPorcentaje);
   const fechaHora = formatearFechaFactura(datos.fecha);
@@ -158,7 +235,9 @@ export function crearFacturaHtml(opts: {
     :root { color-scheme: light; }
     body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #111827; background: #f3f4f6; }
     .page { max-width: 210mm; margin: 0 auto; background: white; padding: 16mm; min-height: 297mm; box-sizing: border-box; }
-    .header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 56px; height: 56px; object-fit: cover; border-radius: 14px; }
     h1 { margin: 0; font-size: 24px; }
     h2 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; }
     .muted { color: #6b7280; font-size: 12px; line-height: 1.4; }
@@ -182,11 +261,14 @@ export function crearFacturaHtml(opts: {
 <body>
   <div class="page">
     <div class="header">
-      <div>
+      <div class="brand">
+        <img src="/logo3.jpg" alt="Logo" />
+        <div>
         <h1>Factura</h1>
         <div class="muted">${datos.negocio}</div>
         <div class="muted">${datos.direccionEmisor}</div>
         <div class="muted">RIF: ${datos.rifEmisor} | Teléfono: ${datos.telefonoEmisor}</div>
+        </div>
       </div>
       <div style="text-align:right">
         <h2>N° ${datos.numero}</h2>
@@ -250,10 +332,7 @@ export function crearFacturaHtml(opts: {
   `;
 }
 
-export function descargarFacturaPdf(opts: {
-  datos: DatosFactura;
-  lineas: LineaCarrito[];
-}) {
+export async function descargarFacturaPdf(opts: { datos: DatosFactura; lineas: LineaCarrito[] }) {
   const { datos, lineas } = opts;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const margenX = 14;
@@ -261,16 +340,18 @@ export function descargarFacturaPdf(opts: {
   const ancho = 210 - margenX * 2;
   const totales = calcularFactura(lineas, datos.ivaPorcentaje);
   const fechaHora = formatearFechaFactura(datos.fecha);
+  const logo = await cargarImagenDataUrl("/logo3.jpg");
 
+  doc.addImage(logo, "JPEG", margenX, y - 2, 18, 18);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Factura", margenX, y);
+  doc.text("Factura", margenX + 22, y + 4);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text(datos.negocio, margenX, y + 7);
-  doc.text(datos.direccionEmisor, margenX, y + 12);
-  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX, y + 17);
+  doc.text(datos.negocio, margenX + 22, y + 11);
+  doc.text(datos.direccionEmisor, margenX + 22, y + 16);
+  doc.text(`RIF: ${datos.rifEmisor} | Tel: ${datos.telefonoEmisor}`, margenX + 22, y + 21);
   doc.setFont("helvetica", "bold");
   doc.text(`N° ${datos.numero}`, 210 - margenX, y + 2, { align: "right" });
   doc.setFont("helvetica", "normal");
@@ -325,16 +406,31 @@ export function descargarFacturaPdf(opts: {
   doc.line(margenX, y, 210 - margenX, y);
   y += 8;
   doc.setFont("helvetica", "normal");
-  doc.text(`Base imponible: ${fmtUsd(totales.baseUsd)} | ${fmtBs(totales.baseBs * datos.tasa)}`, margenX, y);
+  doc.text(
+    `Base imponible: ${fmtUsd(totales.baseUsd)} | ${fmtBs(totales.baseBs * datos.tasa)}`,
+    margenX,
+    y,
+  );
   y += 6;
-  doc.text(`IVA ${datos.ivaPorcentaje}%: ${fmtUsd(totales.ivaUsd)} | ${fmtBs(totales.ivaBs * datos.tasa)}`, margenX, y);
+  doc.text(
+    `IVA ${datos.ivaPorcentaje}%: ${fmtUsd(totales.ivaUsd)} | ${fmtBs(totales.ivaBs * datos.tasa)}`,
+    margenX,
+    y,
+  );
   y += 7;
   doc.setFont("helvetica", "bold");
-  doc.text(`Total: ${fmtUsd(totales.totalUsd)} | ${fmtBs(totales.totalBs * datos.tasa)}`, margenX, y);
+  doc.text(
+    `Total: ${fmtUsd(totales.totalUsd)} | ${fmtBs(totales.totalBs * datos.tasa)}`,
+    margenX,
+    y,
+  );
 
   y += 12;
   doc.setFont("helvetica", "normal");
-  const observaciones = doc.splitTextToSize(`Observaciones: ${datos.observaciones || "Sin observaciones."}`, ancho);
+  const observaciones = doc.splitTextToSize(
+    `Observaciones: ${datos.observaciones || "Sin observaciones."}`,
+    ancho,
+  );
   doc.text(observaciones, margenX, y);
 
   doc.save(`${datos.numero}.pdf`);
